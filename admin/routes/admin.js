@@ -16,4 +16,22 @@ router.post('/create-inventory', inventoryController.createInventory);
 router.put('/update-inventory/:idInventory', inventoryController.updateInventory);
 router.delete('/delete-inventory/:idInventory', inventoryController.deleteInventory);
 
+const purchaseController = require('../controllers/purchaseController');
+
+router.get('/purchases', purchaseController.getAllPurchases);
+router.post('/create-purchase', purchaseController.createPurchase);
+
+const saleController = require('../controllers/saleController');
+
+router.get('/sales', saleController.getAllSales);
+router.post('/create-sale', saleController.createSale);
+
+const clientController = require('../controllers/clientController');
+
+router.get('/clients', clientController.getAllClients);
+router.post('/create-client', clientController.createClient);
+router.put('/update-client/:clientID', clientController.updateClient);
+router.delete('/delete-client/:clientID', clientController.deleteClient);
+
+
 module.exports = router;

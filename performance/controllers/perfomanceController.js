@@ -1,10 +1,7 @@
 const axios = require('axios');
 const Performance = require('../models/Perfomance');
-const Sale = require('../models/Sale');
-const Purchase = require('../models/Purchase');
-const Client = require('../models/Client');
-const Product = require('../models/Product');
-const Inventory = require('../models/Inventory');
+
+const ADMIN_BASE_URL = process.env.ADMIN_BASE_URL || 'http://localhost:3001/api/admin';
 
 exports.calculateDailyPerformance = async () => {
   try {
@@ -12,8 +9,19 @@ exports.calculateDailyPerformance = async () => {
     const startOfDay = new Date(today.setHours(0, 0, 0, 0));
     const endOfDay = new Date(today.setHours(23, 59, 59, 999));
 
-    const sales = await Sale.find({ createdAt: { $gte: startOfDay, $lte: endOfDay } });
-    const purchases = await Purchase.find({ createdAt: { $gte: startOfDay, $lte: endOfDay } });
+    const [salesRes, purchasesRes, clientsRes, inventoryRes, productsRes] = await Promise.all([
+      axios.get(`${ADMIN_BASE_URL}/sales`),
+      axios.get(`${ADMIN_BASE_URL}/purchases`),
+      axios.get(`${ADMIN_BASE_URL}/clients`),
+      axios.get(`${ADMIN_BASE_URL}/inventory`),
+      axios.get(`${ADMIN_BASE_URL}/products`),
+    ]);
+
+    const sales = salesRes.data;
+    const purchases = purchasesRes.data;
+    const clients = clientsRes.data;
+    const inventory = inventoryRes.data;
+    const products = productsRes.data;
 
     const totalSalesAmount = sales.reduce((acc, sale) => acc + sale.total, 0);
     const totalSalesCount = sales.length;
@@ -21,15 +29,14 @@ exports.calculateDailyPerformance = async () => {
     const totalPurchasesAmount = purchases.reduce((acc, purchase) => acc + purchase.total, 0);
     const totalPurchasesCount = purchases.length;
 
-    const allClients = await Client.find();
-    const totalClients = allClients.length;
+    const totalClients = clients.length;
+    const activeClientsToday = new Set(sales.map(s => s.clientId)).size;
 
-    const activeClientsToday = new Set(sales.map(s => s.clientId.toString())).size;
-
+    // Mapa de productos vendidos
     const topSellingMap = {};
     for (let sale of sales) {
       for (let item of sale.items) {
-        const productId = item.productId.toString();
+        const productId = item.productId;
         if (!topSellingMap[productId]) {
           topSellingMap[productId] = { unitsSold: 0, revenue: 0 };
         }
@@ -38,24 +45,24 @@ exports.calculateDailyPerformance = async () => {
       }
     }
 
-    const topSellingProducts = await Promise.all(
-      Object.entries(topSellingMap).map(async ([productId, data]) => {
-        const product = await Product.findById(productId);
-        return {
-          productId: product._id,
-          name: product.name,
-          unitsSold: data.unitsSold,
-          revenue: data.revenue
-        };
-      })
-    );
+    const topSellingProducts = Object.entries(topSellingMap).map(([productId, data]) => {
+      const product = products.find(p => p._id === productId);
+      return {
+        productId,
+        name: product?.name || 'Desconocido',
+        unitsSold: data.unitsSold,
+        revenue: data.revenue
+      };
+    });
 
-    const allInventory = await Inventory.find().populate('productId');
-    const inventorySnapshot = allInventory.map(inv => ({
-      productId: inv.productId._id,
-      name: inv.productId.name,
-      stock: inv.stock
-    }));
+    const inventorySnapshot = inventory.map(item => {
+      const product = products.find(p => p._id === item.productId);
+      return {
+        productId: item.productId,
+        name: product?.name || 'Desconocido',
+        stock: item.stock
+      };
+    });
 
     await Performance.create({
       date: new Date(),
@@ -71,6 +78,7 @@ exports.calculateDailyPerformance = async () => {
 
     console.log('[CRON] Performance snapshot saved successfully.');
   } catch (err) {
-    console.error('[CRON ERROR] Failed to calculate daily performance:', err);
+    console.error('[CRON ERROR] Failed to calculate performance:', err);
+
   }
 };

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+//products, inventory, purchases, sales, clients
 const productController = require('../controllers/productController');
 
 router.get('/products', productController.getAllProducts);
@@ -25,6 +26,7 @@ const saleController = require('../controllers/saleController');
 
 router.get('/sales', saleController.getAllSales);
 router.post('/create-sale', saleController.createSale);
+
 
 const clientController = require('../controllers/clientController');
 

@@ -34,4 +34,4 @@ const saleSchema = new mongoose.Schema({
     timestamps: true
 });
 
-export const saleModel = mongoose.model('Sale', saleSchema);
+module.exports = mongoose.model('Sale', saleSchema);

@@ -10,10 +10,11 @@ exports.getAllClients = async (req, res) => {
 }
 
 exports.createClient = async (req, res) => {
+    console.log('REQ.BODY:', req.body); // <-- Línea clave
     const { clientName, clientEmail } = req.body;
 
     if (!clientName || !clientEmail) {
-        return res.status(400).json({ message: 'Client name, email, and phone are required' });
+        return res.status(400).json({ message: 'Client name and email are required' });
     }
 
     try {
@@ -26,7 +27,8 @@ exports.createClient = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error creating client', error });
     }
-}
+};
+
 
 
 exports.updateClient = async (req, res) => {

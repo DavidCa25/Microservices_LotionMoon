@@ -35,15 +35,21 @@ exports.calculateDailyPerformance = async () => {
     // Mapa de productos vendidos
     const topSellingMap = {};
     for (let sale of sales) {
-      for (let item of sale.items) {
-        const productId = item.productId;
+      for (let item of sale.products) {
+        const productId = item.inventoryID?.product?._id;
+        const price = item.inventoryID?.product?.price || 0;
+
+        if (!productId) continue;
+
         if (!topSellingMap[productId]) {
           topSellingMap[productId] = { unitsSold: 0, revenue: 0 };
         }
+
         topSellingMap[productId].unitsSold += item.quantity;
-        topSellingMap[productId].revenue += item.total;
+        topSellingMap[productId].revenue += item.quantity * price;
       }
     }
+
 
     const topSellingProducts = Object.entries(topSellingMap).map(([productId, data]) => {
       const product = products.find(p => p._id === productId);

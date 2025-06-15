@@ -7,13 +7,8 @@ exports.getAllSales = async (req, res) => {
         const sales = await Sale.find()
         .populate("clientID", "clientName")
         .populate("employeeID", "employeeName")
-        .populate({
-            path: "products.inventoryID",
-            populate: {
-                path: "product",
-                select: "productName price"
-            }
-        });
+        .populate("products.inventoryID")
+
     res.status(200).json(sales);
     }catch (error) {
         res.status(500).json({ message: 'Error fetching sales', error });

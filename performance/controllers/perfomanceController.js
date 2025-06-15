@@ -88,3 +88,45 @@ exports.calculateDailyPerformance = async () => {
 
   }
 };
+
+exports.getPerformanceByDate = async (req, res) => {
+  const { date } = req.query;
+  if (!date) return res.status(400).json({ message: 'Date query param is required' });
+
+  try {
+    const start = new Date(date);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const result = await Performance.findOne({
+      date: { $gte: start, $lte: end }
+    });
+
+    if (!result) return res.status(404).json({ message: 'No performance data found for this date' });
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching performance by date', error });
+  }
+};
+
+exports.getLatestPerformance = async (req, res) => {
+  try {
+    const latest = await Performance.findOne().sort({ date: -1 });
+    if (!latest) return res.status(404).json({ message: 'No performance data found' });
+    res.json(latest);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching latest performance data', error });
+  }
+};
+
+exports.getAllPerformance = async (req, res) => {
+  try {
+    const performanceData = await Performance.find().sort({ date: -1 });
+    res.json(performanceData);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching performance data', error });
+  }
+};
+
+

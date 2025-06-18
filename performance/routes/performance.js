@@ -1,4 +1,4 @@
-const performanceController = require('../controllers/performanceController');
+const performanceController = require('../controllers/perfomanceController');
 const express = require('express');
 const router = express.Router();
 

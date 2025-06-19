@@ -1,0 +1,55 @@
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  admin:
+    build:
+      context: ./admin
+    container_name: admin-service
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./admin/.env
+    depends_on:
+      - mongo
+
+  auth:
+    build:
+      context: ./auth
+    container_name: auth-service
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./auth/.env
+    depends_on:
+      - mongo
+
+  performance:
+    build:
+      context: ./performance
+    container_name: performance-service
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./performance/.env
+    depends_on:
+      - mongo
+
+  reports:
+    build:
+      context: ./reports
+    container_name: reports-service
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./reports/.env
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
